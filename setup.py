@@ -1,14 +1,16 @@
-from distutils.core import setup
+from setuptools import setup
 
 setup(
-    name = "awstestutils",
-    packages = ["awstestutils"],
-    version = "0.1.0",
-    description = "Artifacts to test dependencies with AWS using boto3",
-    long_description=open('README.txt').read(),
+    name = 'awstestutils',
+    packages = ['awstestutils'],
+    version = '0.1.0',
+    description = 'Artifacts to test dependencies with AWS using boto3',
+    long_description=open('README.rst').read(),
 
-    install_require = ['boto3'],
+    install_requires = ['boto3'],
 
-    author = "Elvio Toccalino",
-    author_email = "me@etoccalino.com",
+    test_suite='tests',
+
+    author = 'Elvio Toccalino',
+    author_email = 'me@etoccalino.com',
 )
