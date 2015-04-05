@@ -4,8 +4,6 @@ import json
 import logging
 
 
-###############################################################################
-
 def reduce_logging_output(level=logging.WARN):
     """Reduce the amount of boto related logging messages.
 
@@ -14,8 +12,6 @@ def reduce_logging_output(level=logging.WARN):
     """
     logging.getLogger('botocore').setLevel(level)
 
-
-###############################################################################
 
 class LiveTestBoto3Resource:
 

@@ -11,7 +11,7 @@ Boto3 test utils
 
 Testing artifacts to work with the `boto3 <https://pypi.python.org/pypi/boto3>`_ library.
 
-So far, utils cover working with SQS queues and SNS topics.
+The focus is on python3 and boto3. So far, utils cover working with SQS queues and SNS topics.
 
 ---
 SQS
