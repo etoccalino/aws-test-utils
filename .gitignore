@@ -4,3 +4,4 @@ README.html
 .eggs/
 awstestutils.egg-info/
 dist/
+build/

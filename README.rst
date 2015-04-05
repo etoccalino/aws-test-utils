@@ -51,3 +51,32 @@ Tests
 -----
 
 The package includes a set of integration tests. These test live objects against the AWS backend, so the network must be up and the boto3 must be correctly configured (`as described here <https://boto3.readthedocs.org/en/latest/guide/quickstart.html#configuration>`_).
+
+--------
+Examples
+--------
+
+An example test can be found in ``examples.py``.
+
+Test an object that uses a topic to send data::
+
+  with LiveTestQueue() as queue:
+      o = ObjectUnderTest(sqs_queue=queue)
+      o.do_something()
+      o.send_results_to_backend()
+
+      msgs = queue.receive_messages()
+  self.assertEqual(len(msgs), 1)
+  expected = json.dumps(expected_output)
+  self.assertEqual(msgs[0].body, expected)
+
+Testing an object that publishes to a topic, inspecting the message published::
+
+  with LiveTestTopicQueue() as (topic, queue):
+      o = ObjectUnderTest(topic)
+      o.do_something()
+      o.send_results_to_aws()
+
+      msgs = queue.receive_messages()
+  expected = json.dumps(expected_output)
+  self.assertEqual(msgs[0].body, expected)
