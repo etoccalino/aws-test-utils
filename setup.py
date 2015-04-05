@@ -16,4 +16,13 @@ setup(
 
     author = 'Elvio Toccalino',
     author_email = 'me@etoccalino.com',
+
+    classifiers = [
+        'Development Status :: 4 - Beta',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: BSD License',
+        'Programming Language :: Python :: 3',
+        'Topic :: Software Development :: Testing',
+        'Topic :: Utilities',
+    ]
 )
