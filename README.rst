@@ -4,7 +4,7 @@ Boto3 test utils
 
 :Author:   Elvio Toccalino
 :Date:     |date|
-:Version:  $Revision: 0.1.2 $
+:Version:  $Revision: 0.1.3 $
 
 .. |date| date:: %Y/%m/%d
 
