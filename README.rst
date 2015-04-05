@@ -4,7 +4,7 @@ Boto3 test utils
 
 :Author:   Elvio Toccalino
 :Date:     |date|
-:Version:  $Revision: 0.1.0 $
+:Version:  $Revision: 0.1.2 $
 
 .. |date| date:: %Y/%m/%d
 
@@ -44,6 +44,9 @@ Miscs
 
 reduce_logging_output()
   Quicky reduces the amount of logging output from botocore to simplify debugging of other components.
+
+cleanup()
+  Delete test topics and queues that might have been left behind.
 
 -----
 Tests
