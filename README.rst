@@ -5,13 +5,12 @@ Boto3 test utils
 :Author:   Elvio Toccalino
 :Date:     |date|
 :Version:  $Revision: 0.1.0 $
-:Abstract: Artifacts to test dependencies with AWS using boto3
 
 .. |date| date:: %Y/%m/%d
 
 Testing artifacts to work with the `boto3 <https://pypi.python.org/pypi/boto3>`_ library.
 
-The focus is on python3 and boto3. So far, utils cover working with SQS queues and SNS topics.
+The focus is on **python 3** and **boto3**. So far, utils cover working with SQS queues and SNS topics.
 
 ---
 SQS

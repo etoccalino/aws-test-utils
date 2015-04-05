@@ -2,6 +2,10 @@ import boto3
 import random
 import json
 import logging
+import re
+
+
+TEST_NAME_PREFIX = 'test-'
 
 
 def reduce_logging_output(level=logging.WARN):
@@ -12,6 +16,37 @@ def reduce_logging_output(level=logging.WARN):
     """
     logging.getLogger('botocore').setLevel(level)
 
+
+###############################################################################
+
+def clean_test_queues(prefix=TEST_NAME_PREFIX):
+    """Delete all queues that match a "test" name."""
+    sqs = boto3.resource('sqs')
+    for queue in sqs.queues.all():
+        if re.match(r'.+%s\d+' % TEST_NAME_PREFIX, queue.url):
+            queue.delete()
+
+
+def clean_test_topics(prefix=TEST_NAME_PREFIX):
+    """Delete all topics that match a "test" name."""
+    sns = boto3.resource('sns')
+    for topic in sns.topics.all():
+        if re.match(r'.+%s\d+' % TEST_NAME_PREFIX, topic.arn):
+            topic.delete()
+
+
+def cleanup(prefix=TEST_NAME_PREFIX):
+    """Delete topics and queues that match a "test" name.
+
+    The documentation for boto3 states: "If you delete a queue, you must wait
+    at least 60 seconds before creating a queue with the same name". This delay
+    applies to this function as well.
+    """
+    clean_test_queues(prefix)
+    clean_test_topics(prefix)
+
+
+###############################################################################
 
 class LiveTestBoto3Resource:
 
@@ -24,10 +59,8 @@ class LiveTestBoto3Resource:
     L_NAME = 1000000
     U_NAME = 10000000
 
-    NAME_PREFIX = 'test-'
-
     def _generate_test_name(self):
-        return '%s%s' % (self.NAME_PREFIX,
+        return '%s%s' % (TEST_NAME_PREFIX,
                          str(random.randint(self.L_NAME, self.U_NAME)))
 
     def exists(self, name):
@@ -115,8 +148,6 @@ class LiveTestQueue(LiveTestBoto3Resource):
 
     def __exit__(self, *args):
         self.destroy_queue()
-
-
 
 
 ###############################################################################
