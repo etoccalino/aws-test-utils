@@ -5,6 +5,7 @@ setup(
     packages = ['awstestutils'],
     version = '0.1.3',
     description = 'Artifacts to test dependencies with AWS using boto3',
+    license = 'BSD',
 
     url = 'https://github.com/etoccalino/aws-test-utils',
     download_url = 'https://github.com/etoccalino/aws-test-utils/archive/v0.1.3.zip',
