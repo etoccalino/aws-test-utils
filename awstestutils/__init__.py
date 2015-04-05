@@ -13,11 +13,12 @@ TEST_NAME_PREFIX = 'test-'
 def reduce_logging_output(level=logging.WARN):
     """Reduce the amount of boto related logging messages.
 
-    Botocore can be quite verbose on DEBUG level. This helps reduce logging
-    output when debugging other dependencies.
+    Both boto3 and botocore can be quite verbose on DEBUG level. This helps
+    reduce logging output when debugging other dependencies.
     """
     log.info('setting boto related logging to %s' % level)
     logging.getLogger('botocore').setLevel(level)
+    logging.getLogger('boto3').setLevel(level)
 
 
 def clean_test_queues(prefix=TEST_NAME_PREFIX):
