@@ -5,6 +5,8 @@ import logging
 import re
 
 
+log = logging.getLogger('awstestutils')
+
 TEST_NAME_PREFIX = 'test-'
 
 
@@ -14,25 +16,34 @@ def reduce_logging_output(level=logging.WARN):
     Botocore can be quite verbose on DEBUG level. This helps reduce logging
     output when debugging other dependencies.
     """
+    log.info('setting boto related logging to %s' % level)
     logging.getLogger('botocore').setLevel(level)
 
-
-###############################################################################
 
 def clean_test_queues(prefix=TEST_NAME_PREFIX):
     """Delete all queues that match a "test" name."""
     sqs = boto3.resource('sqs')
-    for queue in sqs.queues.all():
-        if re.match(r'.+%s\d+' % TEST_NAME_PREFIX, queue.url):
-            queue.delete()
+    num_queues = 0
+    try:
+        for queue in sqs.queues.all():
+            if re.match(r'.+%s\d+' % TEST_NAME_PREFIX, queue.url):
+                queue.delete()
+                num_queues += 1
+    finally:
+        log.info('deleted %s test queues' % num_queues)
 
 
 def clean_test_topics(prefix=TEST_NAME_PREFIX):
     """Delete all topics that match a "test" name."""
     sns = boto3.resource('sns')
-    for topic in sns.topics.all():
-        if re.match(r'.+%s\d+' % TEST_NAME_PREFIX, topic.arn):
-            topic.delete()
+    num_topics = 0
+    try:
+        for topic in sns.topics.all():
+            if re.match(r'.+%s\d+' % TEST_NAME_PREFIX, topic.arn):
+                topic.delete()
+                num_topics += 1
+    finally:
+        log.info('deleted %s test topics' % num_topics)
 
 
 def cleanup(prefix=TEST_NAME_PREFIX):
@@ -42,8 +53,11 @@ def cleanup(prefix=TEST_NAME_PREFIX):
     at least 60 seconds before creating a queue with the same name". This delay
     applies to this function as well.
     """
+    log.info('checking for left over test queues')
     clean_test_queues(prefix)
+    log.info('checking for left over test queues')
     clean_test_topics(prefix)
+    log.info('cleanup done')
 
 
 ###############################################################################

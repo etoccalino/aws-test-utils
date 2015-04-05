@@ -46,7 +46,7 @@ reduce_logging_output()
   Quicky reduces the amount of logging output from botocore to simplify debugging of other components.
 
 cleanup()
-  Delete test topics and queues that might have been left behind.
+  Delete test topics and queues that might have been left behind. This function can also be invoked as a script, using ``python -m awstestutils.cleanup``.
 
 -----
 Tests
