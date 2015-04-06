@@ -156,6 +156,7 @@ class LiveTestQueue(LiveTestBoto3Resource):
         response = self.queue.delete()
         if self._is_error_call(response):
             raise RuntimeError('SQS could not delete queue: %s' % response)
+        self.queue, self.queue_name = None, None
 
     def __enter__(self):
         self.create_queue()
@@ -198,6 +199,8 @@ class LiveTestTopicQueue(LiveTestBoto3Resource):
         """
         self.topic = None
         self.topic_name = None
+        self.queue = None
+        self.queue_name = None
         self.queue_manager = LiveTestQueue()
         self.sns = boto3.resource('sns')
 
@@ -244,23 +247,27 @@ class LiveTestTopicQueue(LiveTestBoto3Resource):
 
     def _create_queue(self):
         self.queue_manager.create_queue()
+        self.queue_name = self.queue_manager.queue_name
+        self.queue = self.queue_manager.queue
 
     def create_topic_and_queue(self):
         self._create_topic()
         self._create_queue()
-        self.replace_queue_policy(self.topic, self.queue_manager.queue)
+        self.replace_queue_policy(self.topic, self.queue)
         self.topic.subscribe(
             Protocol='sqs',
-            Endpoint=self.queue_manager.queue.attributes['QueueArn'])
+            Endpoint=self.queue.attributes['QueueArn'])
 
     def _destroy_topic(self):
         """Destroy the topic."""
         response = self.topic.delete()
         if self._is_error_call(response):
             raise RuntimeError('SNS could not delete topic: %s' % response)
+        self.topic, self.topic_name = None, None
 
     def _destroy_queue(self):
         self.queue_manager.destroy_queue()
+        self.queue, self.queue_name = None, None
 
     def destroy_topic_and_queue(self):
         self._destroy_queue()

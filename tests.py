@@ -81,23 +81,44 @@ class LiveTestQueueTestCase(unittest.TestCase):
 
         # Send a message to trigger queue creation.
         live.queue.send_message(MessageBody='dummy message')
+        time.sleep(1)
         num_queues = self._count_sqs_queues(live.sqs)
         self.assertEqual(num_queues, 1)
         # FIX: If that last assertion fails, live.queue.delete() is not called!
 
         # Destroy the queue.
-        live.queue.purge()
         live.__exit__(None, None, None)
         num_queues = self._count_sqs_queues(live.sqs)
         self.assertEqual(num_queues, 0)
 
 
-class LiveTestTopicTestCase(unittest.TestCase):
+class LiveTestTopicQueueTestCase(unittest.TestCase):
 
     def test_use_topic(self):
         with LiveTestTopicQueue() as (topic, queue):
             topic_arn = topic.arn
         self.assertTrue('sns' in topic_arn)
+
+    def test_create_topic_and_queue(self):
+        live = LiveTestTopicQueue()
+        self.assertIsNone(live.topic)
+        self.assertIsNone(live.queue)
+        self.assertIsNone(live.topic_name)
+        self.assertIsNone(live.queue_name)
+        try:
+            live.create_topic_and_queue()
+            time.sleep(1)
+            self.assertIsNotNone(live.topic)
+            self.assertIsNotNone(live.queue)
+            self.assertIsNotNone(live.topic_name)
+            self.assertIsNotNone(live.queue_name)
+        finally:
+            live.destroy_topic_and_queue()
+        time.sleep(1)
+        self.assertIsNone(live.topic)
+        self.assertIsNone(live.queue)
+        self.assertIsNone(live.topic_name)
+        self.assertIsNone(live.queue_name)
 
     def test_message_sent(self):
         with LiveTestTopicQueue() as (topic, queue):
