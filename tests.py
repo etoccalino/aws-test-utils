@@ -46,6 +46,9 @@ class LiveTestBoto3ResourceTestCase(unittest.TestCase):
 
 class LiveTestQueueTestCase(unittest.TestCase):
 
+    def setUp(self):
+        self.region_name = 'us-west-1'
+
     def _count_sqs_queues(self, sqs):
         """Count the number of queues, accounting for latency.
 
@@ -63,12 +66,12 @@ class LiveTestQueueTestCase(unittest.TestCase):
         return left_over_queues
 
     def test_use_queue(self):
-        with LiveTestQueue() as queue:
+        with LiveTestQueue(region_name=self.region_name) as queue:
             queue_url = queue.url
         self.assertTrue('http' in queue_url)
 
     def test_message_in_queue(self):
-        with LiveTestQueue() as queue:
+        with LiveTestQueue(region_name=self.region_name) as queue:
             queue.send_message(MessageBody='test text')
             msgs = queue.receive_messages()
         self.assertEqual(len(msgs), 1)
@@ -76,7 +79,7 @@ class LiveTestQueueTestCase(unittest.TestCase):
 
     def test_deleted_queue(self):
         # Create the queue.
-        live = LiveTestQueue()
+        live = LiveTestQueue(region_name=self.region_name)
         live.__enter__()
 
         # Send a message to trigger queue creation.
@@ -94,13 +97,16 @@ class LiveTestQueueTestCase(unittest.TestCase):
 
 class LiveTestTopicQueueTestCase(unittest.TestCase):
 
+    def setUp(self):
+        self.region_name = 'us-west-1'
+
     def test_use_topic(self):
-        with LiveTestTopicQueue() as (topic, queue):
+        with LiveTestTopicQueue(region_name=self.region_name) as (topic, queue):
             topic_arn = topic.arn
         self.assertTrue('sns' in topic_arn)
 
     def test_create_topic_and_queue(self):
-        live = LiveTestTopicQueue()
+        live = LiveTestTopicQueue(region_name=self.region_name)
         self.assertIsNone(live.topic)
         self.assertIsNone(live.queue)
         self.assertIsNone(live.topic_name)
@@ -121,7 +127,7 @@ class LiveTestTopicQueueTestCase(unittest.TestCase):
         self.assertIsNone(live.queue_name)
 
     def test_message_sent(self):
-        with LiveTestTopicQueue() as (topic, queue):
+        with LiveTestTopicQueue(region_name=self.region_name) as (topic, queue):
             topic.publish(Message='some')
             time.sleep(1)
             msgs = queue.receive_messages()
