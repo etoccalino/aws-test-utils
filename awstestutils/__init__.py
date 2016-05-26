@@ -47,7 +47,7 @@ def clean_test_topics(prefix=TEST_NAME_PREFIX, region_name=None):
         log.info('deleted %s test topics' % num_topics)
 
 
-def cleanup(prefix=TEST_NAME_PREFIX):
+def cleanup(prefix=TEST_NAME_PREFIX, region_name=None):
     """Delete topics and queues that match a "test" name.
 
     The documentation for boto3 states: "If you delete a queue, you must wait
@@ -55,9 +55,9 @@ def cleanup(prefix=TEST_NAME_PREFIX):
     applies to this function as well.
     """
     log.info('checking for left over test queues')
-    clean_test_queues(prefix)
+    clean_test_queues(prefix, region_name)
     log.info('checking for left over test queues')
-    clean_test_topics(prefix)
+    clean_test_topics(prefix, region_name)
     log.info('cleanup done')
 
 
