@@ -21,9 +21,9 @@ def reduce_logging_output(level=logging.WARN):
     logging.getLogger('boto3').setLevel(level)
 
 
-def clean_test_queues(prefix=TEST_NAME_PREFIX):
+def clean_test_queues(prefix=TEST_NAME_PREFIX, region_name=None):
     """Delete all queues that match a "test" name."""
-    sqs = boto3.resource('sqs')
+    sqs = boto3.resource('sqs', region_name=region_name)
     num_queues = 0
     try:
         for queue in sqs.queues.all():
@@ -34,9 +34,9 @@ def clean_test_queues(prefix=TEST_NAME_PREFIX):
         log.info('deleted %s test queues' % num_queues)
 
 
-def clean_test_topics(prefix=TEST_NAME_PREFIX):
+def clean_test_topics(prefix=TEST_NAME_PREFIX, region_name=None):
     """Delete all topics that match a "test" name."""
-    sns = boto3.resource('sns')
+    sns = boto3.resource('sns', region_name=region_name)
     num_topics = 0
     try:
         for topic in sns.topics.all():
@@ -127,14 +127,14 @@ class LiveTestQueue(LiveTestBoto3Resource):
         >>>   msg.delete()
     """
 
-    def __init__(self):
+    def __init__(self, region_name=None):
         """Setup test manager.
 
-        Assumens boto3 correctly configured.
+        Assumes boto3 correctly configured.
         """
         self.queue = None
         self.queue_name = None
-        self.sqs = boto3.resource('sqs')
+        self.sqs = boto3.resource('sqs', region_name=region_name)
 
     def exists(self, queue_name):
         for queue in self.sqs.queues.all():
@@ -192,17 +192,17 @@ class LiveTestTopicQueue(LiveTestBoto3Resource):
         >>>     print(msgs[0].body)
     """
 
-    def __init__(self):
+    def __init__(self, region_name=None):
         """Setup test manager.
 
-        Assumens boto3 correctly configured.
+        Assumes boto3 correctly configured.
         """
         self.topic = None
         self.topic_name = None
         self.queue = None
         self.queue_name = None
-        self.queue_manager = LiveTestQueue()
-        self.sns = boto3.resource('sns')
+        self.queue_manager = LiveTestQueue(region_name=region_name)
+        self.sns = boto3.resource('sns', region_name=region_name)
 
     def create_queue_policy(self, topic, queue):
         """The queue needs a policy to allow the topic to post to it."""
