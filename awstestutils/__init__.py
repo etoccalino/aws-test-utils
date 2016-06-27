@@ -4,7 +4,6 @@ import json
 import logging
 import re
 
-
 log = logging.getLogger('awstestutils')
 
 TEST_NAME_PREFIX = 'test-'
@@ -64,7 +63,6 @@ def cleanup(prefix=TEST_NAME_PREFIX, region_name=None):
 ###############################################################################
 
 class LiveTestBoto3Resource:
-
     """Base class for the Queue and Topic test wrappers.
 
     The method ``exists()`` must be implemented for ``generate_name()`` to
@@ -208,7 +206,7 @@ class LiveTestTopicQueue(LiveTestBoto3Resource):
         """The queue needs a policy to allow the topic to post to it."""
         return {
             'Version': '2012-10-17',
-            'Statement':[
+            'Statement': [
                 {
                     'Sid': 'TestTopicQueuePolicy',
                     'Effect': 'Allow',
@@ -216,7 +214,7 @@ class LiveTestTopicQueue(LiveTestBoto3Resource):
                     'Action': 'sqs:SendMessage',
                     'Resource': queue.attributes['QueueArn'],
                     'Condition': {
-                        'ArnEquals':{
+                        'ArnEquals': {
                             'aws:SourceArn': topic.arn
                         }
                     }
@@ -279,3 +277,183 @@ class LiveTestTopicQueue(LiveTestBoto3Resource):
 
     def __exit__(self, *args):
         self.destroy_topic_and_queue()
+
+
+###############################################################################
+
+class LiveTestDynamoDBTable(LiveTestBoto3Resource):
+    """
+    Context manage the test DynamoDB Table.
+
+    Intended usage to handle setup and tear down queue:
+
+        >>> live = LiveTestDynamoDBTable()
+        >>> live.create_table()
+        >>> live.table.put_item(Item={
+        >>>     'string_key': 'key1',
+        >>>     'numeric_key': 0,
+        >>>     'attribute_1': 'attribute'
+        >>> })
+        >>> response = live.table.get_item(Key={
+        >>>     'string_key': 'key1',
+        >>>     'numeric_key': 0
+        >>> })
+        >>> print(response['Item'])
+        >>> live.destroy_table()
+
+    Intended usage as a context manager:
+
+        >>> with LiveTestDynamoDBTable as table:
+        >>>     live.table.put_item(Item={
+        >>>         'string_key': 'key1',
+        >>>         'numeric_key': 0,
+        >>>         'attribute_1': 'attribute'
+        >>>     })
+        >>>     response = live.table.get_item(Key={
+        >>>         'string_key': 'key1',
+        >>>         'numeric_key': 0
+        >>>     })
+        >>>     print(response['Item'])
+    """
+    __DEFAULT_KEY_SCHEMA = [
+        {
+            'AttributeName': 'string_key',
+            'KeyType': 'HASH'
+        },
+        {
+            'AttributeName': 'numeric_key',
+            'KeyType': 'RANGE'
+        }
+    ]
+
+    __DEFAULT_ATTRIBUTES_DEFINITIONS = [
+        {
+            'AttributeName': 'string_key',
+            'AttributeType': 'S'
+        },
+        {
+            'AttributeName': 'numeric_key',
+            'AttributeType': 'N'
+        }
+    ]
+
+    __DEFAULT_PROVISIONED_THROUGHPUT = {
+        'ReadCapacityUnits': 1,
+        'WriteCapacityUnits': 1
+    }
+
+    @staticmethod
+    def create_key_schema(partition_key_name='string-key', sorting_key_name='numeric_key',
+                          partition_key_type='S', sorting_key_type='N',
+                          read_capacity_units=1, write_capacity_units=1):
+        """
+        Helper function to make the table's schema painlessly.
+
+        :param partition_key_name: Name for the table's partition key
+        :param sorting_key_name: Name for the table's sorting key
+        :param partition_key_type: Type for the table's partition key (String, Numeric, Set, etc)
+        :param sorting_key_type: Type for the tables's sorting key (String, Numeric, Set, etc)
+        :param read_capacity_units: Quantity of read capacity units
+        :param write_capacity_units: Quantity of write capacity units
+        :return: tuple with key_schema, attributes_definition and provisioned_throughput
+        """
+        key_schema = []
+        attributes_definitions = []
+
+        def append_key(key_name, key_type, attribute_type):
+            key_schema.append({
+                'AttributeName': key_name,
+                'KeyType': key_type
+            })
+            attributes_definitions.append({
+                'AttributeName': key_name,
+                'AttributeType': attribute_type
+            })
+
+        if partition_key_name:
+            append_key(partition_key_name, 'HASH', partition_key_type)
+        if sorting_key_name:
+            append_key(sorting_key_name, 'RANGE', sorting_key_type)
+
+        return key_schema, attributes_definitions, {
+            'ReadCapacityUnits': read_capacity_units,
+            'WriteCapacityUnits': write_capacity_units
+        }
+
+    def __init__(self, region_name=None):
+        """
+        Setup test manager.
+
+        Assumes boto3 correctly configured
+        :param region_name:
+        """
+        self.table = None
+        self.table_name = None
+        self.dynamodb = boto3.resource('dynamodb', region_name=region_name)
+        pass
+
+    def exists(self, table_name):
+        for table in self.dynamodb.tables.all():
+            if table_name in table.name:
+                return True
+        return False
+
+    def create_table(self,
+                     key_schema_definition=__DEFAULT_KEY_SCHEMA,
+                     attributes_definition=__DEFAULT_ATTRIBUTES_DEFINITIONS,
+                     provisioned_throughput=__DEFAULT_PROVISIONED_THROUGHPUT):
+        """
+        Creates the testing table with a name.
+        :param key_schema_definition: Table's key schema definition. By default uses:
+        >>> [
+        >>>     {
+        >>>         'AttributeName': 'string_key',
+        >>>         'KeyType': 'HASH'
+        >>>     },
+        >>>     {
+        >>>         'AttributeName': 'numeric_key',
+        >>>         'KeyType': 'RANGE'
+        >>>     }
+        >>> ]
+        :param attributes_definition: The types for the table's key schema definition. By default uses:
+        >>> [
+        >>>     {
+        >>>         'AttributeName': 'string_key',
+        >>>         'AttributeType': 'S'
+        >>>     },
+        >>>     {
+        >>>         'AttributeName': 'numeric_key',
+        >>>         'AttributeType': 'N'
+        >>>     }
+        >>> ]
+        :param provisioned_throughput: The table's provisioned throughput configuration. By default uses:
+        >>> {
+        >>>     'ReadCapacityUnits': 1,
+        >>>     'WriteCapacityUnits': 1
+        >>> }
+        :return: Nothing
+        """
+        table_name = self.generate_name()
+        try:
+            table = self.dynamodb.create_table(
+                TableName=table_name,
+                KeySchema=key_schema_definition,
+                AttributesDefinition=attributes_definition,
+                ProvisionedThroughput=provisioned_throughput)
+        except Exception as e:
+            raise RuntimeError('DynamoDB could not create table: %s' % e)
+        self.table_name, self.table = table_name, table
+
+    def destroy_table(self):
+        """Destroys the created table."""
+        response = self.table.delete()
+        if self._is_error_call(response):
+            raise RuntimeError('DynamoDB coul not delete the table: %s' % response)
+        self.table, self.table_name = None, None
+
+    def __enter__(self):
+        self.create_table()
+        return self.table
+
+    def __exit__(self, *args):
+        self.destroy_table()
