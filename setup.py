@@ -3,7 +3,7 @@ from setuptools import setup
 setup(
     name = 'awstestutils',
     packages = ['awstestutils'],
-    version = '0.2.0',
+    version = '0.2.1',
     description = 'Artifacts to test dependencies with AWS using boto3',
     license = 'BSD',
 
