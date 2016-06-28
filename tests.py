@@ -1,13 +1,15 @@
 import unittest
 import time
 import json
+
+import boto3
+
 from awstestutils import (LiveTestBoto3Resource,
                           LiveTestQueue,
-                          LiveTestTopicQueue)
+                          LiveTestTopicQueue, LiveTestDynamoDBTable)
 
 
 class LiveTestBoto3ResourceTestCase(unittest.TestCase):
-
     def setUp(self):
         self.resource = LiveTestBoto3Resource()
 
@@ -33,10 +35,12 @@ class LiveTestBoto3ResourceTestCase(unittest.TestCase):
         # Simulate the first name exists.
         def exists():
             exists_one = [True]
+
             def _exists_once(name):
                 if exists_one[0]:
                     exists_one[0] = False
                 return exists_one[0]
+
             return _exists_once
 
         self.resource.exists = exists()
@@ -45,7 +49,6 @@ class LiveTestBoto3ResourceTestCase(unittest.TestCase):
 
 
 class LiveTestQueueTestCase(unittest.TestCase):
-
     def setUp(self):
         self.region_name = 'us-west-1'
 
@@ -96,7 +99,6 @@ class LiveTestQueueTestCase(unittest.TestCase):
 
 
 class LiveTestTopicQueueTestCase(unittest.TestCase):
-
     def setUp(self):
         self.region_name = 'us-west-1'
 
@@ -135,3 +137,51 @@ class LiveTestTopicQueueTestCase(unittest.TestCase):
         self.assertEqual(len(msgs), 1)
         payload = json.loads(msgs[0].body)['Message']
         self.assertEqual(payload, 'some')
+
+
+class LiveTestDynamoDBTableTestCase(unittest.TestCase):
+    def setUp(self):
+        self.region_name = 'us-west-1'
+
+    def test_use_table(self):
+        with LiveTestDynamoDBTable(region_name=self.region_name) as table:
+            table_arn = table.table_arn
+        self.assertTrue('dynamodb' in table_arn)
+
+    def test_table_creation(self):
+        key_schema, attribute_definitions, provisioned_throughput = LiveTestDynamoDBTable.create_key_schema(
+            partition_key_name='my_partition_key', sorting_key_name='my_sorting_key',
+            partition_key_type='S', sorting_key_type='N', read_capacity_units=1, write_capacity_units=1)
+        with LiveTestDynamoDBTable(key_schema_definition=key_schema,
+                                   attribute_definitions=attribute_definitions,
+                                   provisioned_throughput=provisioned_throughput) as table:
+            self.assertEqual(key_schema, table.key_schema)
+            self.assertEqual(attribute_definitions, table.attribute_definitions)
+            # Boto3's DynamoDB Table comes with a number of decreases of the day that prevents the assertion from being
+            # true. That property is a dynamic property never specified in the API, so it cannot be controlled by during
+            # initialization
+            del table.provisioned_throughput['NumberOfDecreasesToday']
+            self.assertEqual(provisioned_throughput, table.provisioned_throughput)
+
+    def test_insert_item(self):
+        key_schema, attribute_definitions, provisioned_throughput = LiveTestDynamoDBTable.create_key_schema(
+            partition_key_name='my_partition_key', sorting_key_name='my_sorting_key',
+            partition_key_type='S', sorting_key_type='N', read_capacity_units=1, write_capacity_units=1)
+        with LiveTestDynamoDBTable(key_schema_definition=key_schema,
+                                   attribute_definitions=attribute_definitions,
+                                   provisioned_throughput=provisioned_throughput) as live_table:
+            dynamodb = boto3.resource('dynamodb')
+            testing_table = dynamodb.Table(live_table.name)
+            item = {
+                'my_partition_key': 'test',
+                'my_sorting_key': 0,
+                'my_testing_attribute': 'testing attribute'
+            }
+            live_table.put_item(Item=item)
+            response = testing_table.get_item(Key={
+                'my_partition_key': 'test',
+                'my_sorting_key': 0
+            })
+            testing_item = response['Item']
+            self.assertEqual(item, testing_item)
+            testing_table = None
