@@ -186,7 +186,7 @@ class LiveTestTopicQueue(LiveTestBoto3Resource):
 
     Intended usage as a context manager:
 
-        >>> with LiveTestTopicQueue() as topic, queue:
+        >>> with LiveTestTopicQueue() as (topic, queue):
         >>>     topic.publish(Message='some')
         >>>     msgs = queue.receive_messages()
         >>>     print(msgs[0].body)
