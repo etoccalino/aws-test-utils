@@ -38,6 +38,21 @@ LiveTestTopicQueue allows to test code on topics.
 
 The context manager creates (and finally deletes) a pair of objects, one topic and one queue, that work together. Messages published to the topic can be red back on the queue. The topic has the appropriate policy to publish to the queue, and the queue is subscribed to the topic to operate as its endpoint.
 
+--------
+DynamoDB
+--------
+
+LiveTestDynamoDBTable allows to test using live test DynamoDB tables:
+
+>>> key_schema, attribute_definitions, provisioned_throughput = LiveTestDynamoDBTable.create_key_schema(
+>>>     partition_key_name='my_partition_key', sorting_key_name='my_sorting_key',
+>>>     partition_key_type='S', sorting_key_type='N', read_capacity_units=1, write_capacity_units=1)
+>>> with LiveTestDynamoDBTable(key_schema_definition=key_schema,
+>>>                            attribute_definitions=attribute_definitions,
+>>>                            provisioned_throughput=provisioned_throughput) as table:
+
+Note the helper function to create the key schemas. Upong exiting the context manager, the test table is deleted.
+
 -----
 Miscs
 -----
