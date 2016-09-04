@@ -4,7 +4,7 @@ Boto3 test utils
 
 :Author:   Elvio Toccalino
 :Date:     |date|
-:Version:  $Revision: 0.9.9 $
+:Version:  $Revision: 1.0.0 $
 
 .. |date| date:: %Y/%m/%d
 
@@ -97,3 +97,12 @@ Testing an object that publishes to a topic, inspecting the message published::
       msgs = queue.receive_messages()
   expected = json.dumps(expected_output)
   self.assertEqual(msgs[0].body, expected)
+
+-------------
+Collaborators
+-------------
+
+- Facundo Martinez (@fnmartinez) did an awesome job adding support for DynamoDB and its associated tests.
+- Ezequiel Pochiero (@epochiero) fixed the original blunder managing the region names.
+
+Thank you both!

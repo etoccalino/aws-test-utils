@@ -3,7 +3,7 @@ from setuptools import setup
 setup(
     name = 'awstestutils',
     packages = ['awstestutils'],
-    version = '0.9.9',
+    version = '1.0.0',
     description = 'Artifacts to test dependencies with AWS using boto3',
     license = 'BSD',
 
@@ -19,7 +19,7 @@ setup(
     author_email = 'me@etoccalino.com',
 
     classifiers = [
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
         'Programming Language :: Python :: 3',
