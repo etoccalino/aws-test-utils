@@ -201,6 +201,7 @@ class LiveTestTopicQueue(LiveTestBoto3Resource):
         self.topic_name = None
         self.queue = None
         self.queue_name = None
+        self.subscription = None
         self.queue_manager = LiveTestQueue(region_name=region_name)
         self.sns = boto3.resource('sns', region_name=region_name)
 
@@ -254,7 +255,7 @@ class LiveTestTopicQueue(LiveTestBoto3Resource):
         self._create_topic()
         self._create_queue()
         self.replace_queue_policy(self.topic, self.queue)
-        self.topic.subscribe(
+        self.subscription = self.topic.subscribe(
             Protocol='sqs',
             Endpoint=self.queue.attributes['QueueArn'])
 
@@ -270,6 +271,8 @@ class LiveTestTopicQueue(LiveTestBoto3Resource):
         self.queue, self.queue_name = None, None
 
     def destroy_topic_and_queue(self):
+        self.subscription.delete()
+        self.subscription = None
         self._destroy_queue()
         self._destroy_topic()
 

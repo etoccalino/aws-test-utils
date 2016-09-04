@@ -144,6 +144,7 @@ class LiveTestTopicQueueTestCase(unittest.TestCase):
         self.assertEqual(payload, 'some')
 
     def _get_all_topic_subscriptions_ARNs(self, topic_arn):
+        # Assume less than 100 subscriptions for the topic (default page size)
         r = boto3.client('sns').list_subscriptions_by_topic(TopicArn=topic_arn)
         return [s['SubscriptionArn'] for s in r['Subscriptions']]
 
@@ -158,8 +159,8 @@ class LiveTestTopicQueueTestCase(unittest.TestCase):
     def test_subscriptions_deleted(self):
         with LiveTestTopicQueue(region_name=self.region_name) as (topic, queue):
             topic.publish(Message='some')
-            time.sleep(1)
             subscriptions_arns = self._get_all_topic_subscriptions_ARNs(topic.arn)
+        time.sleep(3)
         for arn in subscriptions_arns:
             self.assertFalse(self._subscription_exists(arn))
 
