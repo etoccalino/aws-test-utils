@@ -3,6 +3,7 @@ import time
 import json
 
 import boto3
+import botocore.exceptions
 
 from awstestutils import (LiveTestBoto3Resource,
                           LiveTestQueue,
@@ -141,6 +142,26 @@ class LiveTestTopicQueueTestCase(unittest.TestCase):
         self.assertEqual(len(msgs), 1)
         payload = json.loads(msgs[0].body)['Message']
         self.assertEqual(payload, 'some')
+
+    def _get_all_topic_subscriptions_ARNs(self, topic_arn):
+        r = boto3.client('sns').list_subscriptions_by_topic(TopicArn=topic_arn)
+        return [s['SubscriptionArn'] for s in r['Subscriptions']]
+
+    def _subscription_exists(self, subscription_arn):
+        subscription = boto3.resource('sns').Subscription(subscription_arn)
+        try:
+            subscription.load()
+        except botocore.exceptions.ClientError:
+            return False
+        return True
+
+    def test_subscriptions_deleted(self):
+        with LiveTestTopicQueue(region_name=self.region_name) as (topic, queue):
+            topic.publish(Message='some')
+            time.sleep(1)
+            subscriptions_arns = self._get_all_topic_subscriptions_ARNs(topic.arn)
+        for arn in subscriptions_arns:
+            self.assertFalse(self._subscription_exists(arn))
 
 
 class LiveTestDynamoDBTableTestCase(unittest.TestCase):
