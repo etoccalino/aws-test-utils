@@ -87,10 +87,14 @@ class LiveTestQueueTestCase(unittest.TestCase):
 
         # Send a message to trigger queue creation.
         live.queue.send_message(MessageBody='dummy message')
-        time.sleep(1)
+        time.sleep(5)
         num_queues = self._count_sqs_queues(live.sqs)
-        self.assertEqual(num_queues, 1)
-        # FIX: If that last assertion fails, live.queue.delete() is not called!
+        try:
+            self.assertEqual(num_queues, 1)
+        except Exception as e:
+            # Call live.queue.delete() even if that last assertion fails.
+            live.queue.delete()
+            raise e
 
         # Destroy the queue.
         live.__exit__(None, None, None)
